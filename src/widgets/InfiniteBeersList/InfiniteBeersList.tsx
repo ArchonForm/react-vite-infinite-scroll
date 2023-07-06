@@ -1,50 +1,48 @@
 import { useEffect, useState } from "react"
-import { Col, Row } from "antd"
-import { Beer } from "../../entities/Beer/types"
+import { Alert, Col, Row } from "antd"
 import BeerCard from "../../entities/Beer/components/BeerCard/BeerCard"
 import ThreeDotsLoader from "../../shared/ui/ThreeDotsLoader/ThreeDotsLoader"
 import { useBeers } from "../../entities/Beer/store"
-import { fetchBeers } from "../../entities/Beer/api"
 
 const InfiniteBeersList = () => {
   const pageSize: number = 30
   const totalCount: number = 1000
 
   const beers = useBeers(state => state.beers)
-  const storeBeers = useBeers(state => state.storeBeers)
+  const [page, setPage] = useState<number>(1)
 
-  const [currentPage, setCurrentPage] = useState<number>(1)
-  const [fetching, setFetching] = useState<boolean>(true)
+  const { loading, error, getBeers } = useBeers(state => ({
+    loading: state.loading,
+    error: state.error,
+    getBeers: state.getBeers,
+  }))
 
   useEffect(() => {
-    if (fetching) {
-      fetchBeers(currentPage, pageSize)
-        .then((res: Beer[]) => {
-          storeBeers(res)
-          setCurrentPage(prev => prev + 1)
-        })
-        .finally(() => setFetching(false))
+    if (beers.length > totalCount) {
+      return
     }
-  }, [fetching])
+    getBeers(page, pageSize)
+  }, [page])
 
   useEffect(() => {
     document.addEventListener("scroll", scrollHandler)
 
     return () => document.removeEventListener("scroll", scrollHandler)
-  }, [fetching])
+  }, [])
 
   const scrollHandler = () => {
     const scrollHeight = document.documentElement.scrollHeight
     const innerHeight = window.innerHeight
     const scrollTop = document.documentElement.scrollTop
 
-    if (scrollHeight - (scrollTop + innerHeight) < 100 && beers.length < totalCount) {
-      setFetching(true)
+    if (innerHeight + scrollTop + 0.1 >= scrollHeight) {
+      setPage(prev => prev + 1)
     }
   }
 
   return (
     <>
+      {error && <Alert message="Oops!" description="Something went wrong." type="error" showIcon />}
       <Row gutter={16} justify="center">
         {beers?.map(beer => (
           <Col key={beer.id}>
@@ -52,7 +50,7 @@ const InfiniteBeersList = () => {
           </Col>
         ))}
       </Row>
-      {fetching && <ThreeDotsLoader />}
+      {loading && <ThreeDotsLoader />}
     </>
   )
 }
