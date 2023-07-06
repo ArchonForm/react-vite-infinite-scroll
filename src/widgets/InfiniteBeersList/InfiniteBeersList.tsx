@@ -22,9 +22,6 @@ const InfiniteBeersList = () => {
   )
 
   useEffect(() => {
-    if (beers.length > totalCount) {
-      return
-    }
     getBeers(page, pageSize)
   }, [page])
 
@@ -32,14 +29,14 @@ const InfiniteBeersList = () => {
     document.addEventListener("scroll", scrollHandler)
 
     return () => document.removeEventListener("scroll", scrollHandler)
-  }, [])
+  }, [page])
 
   const scrollHandler = () => {
     const scrollHeight = document.documentElement.scrollHeight
     const innerHeight = window.innerHeight
     const scrollTop = document.documentElement.scrollTop
 
-    if (innerHeight + scrollTop + 0.1 >= scrollHeight) {
+    if (innerHeight + scrollTop + 0.1 >= scrollHeight && beers.length < totalCount) {
       setPage(prev => prev + 1)
     }
   }
