@@ -46,7 +46,7 @@ const InfiniteBeersList = () => {
   return (
     <>
       <Row gutter={16} justify="center">
-        {beers?.map((beer: any) => (
+        {beers?.map(beer => (
           <Col key={beer.id}>
             <BeerCard beer={beer} />
           </Col>
