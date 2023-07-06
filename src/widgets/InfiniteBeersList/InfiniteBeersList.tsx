@@ -3,6 +3,7 @@ import { Alert, Col, Row } from "antd"
 import BeerCard from "../../entities/Beer/components/BeerCard/BeerCard"
 import ThreeDotsLoader from "../../shared/ui/ThreeDotsLoader/ThreeDotsLoader"
 import { useBeers } from "../../entities/Beer/store"
+import { shallow } from "zustand/shallow"
 
 const InfiniteBeersList = () => {
   const pageSize: number = 30
@@ -11,11 +12,14 @@ const InfiniteBeersList = () => {
   const beers = useBeers(state => state.beers)
   const [page, setPage] = useState<number>(1)
 
-  const { loading, error, getBeers } = useBeers(state => ({
-    loading: state.loading,
-    error: state.error,
-    getBeers: state.getBeers,
-  }))
+  const { loading, error, getBeers } = useBeers(
+    state => ({
+      loading: state.loading,
+      error: state.error,
+      getBeers: state.getBeers,
+    }),
+    shallow
+  )
 
   useEffect(() => {
     if (beers.length > totalCount) {
