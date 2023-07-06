@@ -1,30 +1,56 @@
-import InfiniteScroll from "react-infinite-scroll-component"
-import ThreeDotsLoader from "../../shared/ui/ThreeDotsLoader/ThreeDotsLoader"
-import useBeers from "../../entities/Beer/hooks/useBeers"
-import BeerCard from "../../entities/Beer/components/BeerCard/BeerCard"
+import { useEffect, useState } from "react"
 import { Col, Row } from "antd"
+import { Beer } from "../../entities/Beer/types"
+import { fetchBeers } from "../../entities/Beer/api"
+import BeerCard from "../../entities/Beer/components/BeerCard/BeerCard"
+import ThreeDotsLoader from "../../shared/ui/ThreeDotsLoader/ThreeDotsLoader"
 
 const InfiniteBeersList = () => {
-  const { data, fetchNextPage, hasNextPage } = useBeers()
+  const pageSize: number = 30
+  const totalCount: number = 1000
+
+  const [beers, setBeers] = useState<Beer[]>([])
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [fetching, setFetching] = useState<boolean>(true)
+
+  useEffect(() => {
+    if (fetching) {
+      fetchBeers(currentPage, pageSize)
+        .then((res: Beer[]) => {
+          setBeers([...beers, ...res])
+          setCurrentPage(prev => prev + 1)
+        })
+        .finally(() => setFetching(false))
+    }
+  }, [fetching])
+
+  useEffect(() => {
+    document.addEventListener("scroll", scrollHandler)
+
+    return () => document.removeEventListener("scroll", scrollHandler)
+  }, [fetching])
+
+  const scrollHandler = () => {
+    const scrollHeight = document.documentElement.scrollHeight
+    const innerHeight = window.innerHeight
+    const scrollTop = document.documentElement.scrollTop
+
+    if (scrollHeight - (scrollTop + innerHeight) < 100 && beers.length < totalCount) {
+      setFetching(true)
+    }
+  }
 
   return (
-    <InfiniteScroll
-      style={{ overflow: "hidden" }}
-      next={fetchNextPage}
-      hasMore={hasNextPage || false}
-      loader={<ThreeDotsLoader />}
-      dataLength={data?.pages.reduce((total, page) => total + page.length, 0) || 0}
-    >
+    <>
       <Row gutter={16} justify="center">
-        {data?.pages.map(page =>
-          page.map(beer => (
-            <Col key={beer.id}>
-              <BeerCard beer={beer} />
-            </Col>
-          ))
-        )}
+        {beers?.map(beer => (
+          <Col key={beer.id}>
+            <BeerCard beer={beer} />
+          </Col>
+        ))}
       </Row>
-    </InfiniteScroll>
+      {fetching && <ThreeDotsLoader />}
+    </>
   )
 }
 
